@@ -32,36 +32,51 @@ def add_value(xpath):
         return ''
 
 count = 1
+visited_pages = []
+
 while True:
     house_link = get_house_link(count)
-    driver.get(house_link)
-    time.sleep(3)
 
-    features = []
+    if house_link:
+        driver.get(house_link)
+        time.sleep(3)
 
-    list_features = driver.find_element_by_class_name('features')    
-    features = add_features(list_features.find_elements_by_tag_name("li"), features)
+        features = []
 
-    try:
-        button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
-        button_features.click()
+        list_features = driver.find_element_by_class_name('features')    
+        features = add_features(list_features.find_elements_by_tag_name("li"), features)
 
-        more_features = driver.find_element_by_class_name('amenities__list')
-        features = add_features(more_features.find_elements_by_tag_name('li'), features)   
-    except Exception as e:
-        print(e)
+        try:
+            button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
+            button_features.click()
 
-    aluguel = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
-    condominio = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]')
-    iptu = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]')
-    fotos = add_value('//*[@id="js-site-main"]/div[1]/div[2]/span')
-    endereco = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p')
-    description = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p')
-    description_len = 0 if not description else len(description.split(' '))
+            more_features = driver.find_element_by_class_name('amenities__list')
+            features = add_features(more_features.find_elements_by_tag_name('li'), features)   
+        except Exception as e:
+            print(e)
 
-    features.extend([aluguel, condominio, iptu, fotos, endereco, description_len])
+        aluguel = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
+        condominio = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]')
+        iptu = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]')
+        fotos = add_value('//*[@id="js-site-main"]/div[1]/div[2]/span')
+        endereco = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p')
+        description = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p')
+        description_len = 0 if not description else len(description.split(' '))
 
-    driver.back()
-    count+= 1
+        features.extend([aluguel, condominio, iptu, fotos, endereco, description_len])
+
+        driver.back()
+        count+= 1
+    else:
+        list_pages = driver.find_element_by_class_name('pagination__wrapper')
+        next_page = list_pages.find_elements_by_tag_name('li')
+
+        for page in next_page:
+            next_link = page.get_attribute('href')
+        
+            if next_link not in visited_pages:
+                visited_pages.append(next_link)
+                driver.get(next_link)
+        
 
 # driver.close()
