@@ -31,52 +31,81 @@ def add_value(xpath):
     except:
         return ''
 
-count = 1
-visited_pages = []
+def house_scraping(driver):
+    count = 1
+    visited_pages = []
 
-while True:
-    house_link = get_house_link(count)
+    while True:
+        house_link = get_house_link(count)
 
-    if house_link:
-        driver.get(house_link)
-        time.sleep(3)
+        if house_link:
+            driver.get(house_link)
+            time.sleep(3)
 
-        features = []
+            features = []
 
-        list_features = driver.find_element_by_class_name('features')    
-        features = add_features(list_features.find_elements_by_tag_name("li"), features)
+            list_features = driver.find_element_by_class_name('features')    
+            features = add_features(list_features.find_elements_by_tag_name("li"), features)
 
-        try:
-            button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
-            button_features.click()
+            try:
+                button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
+                button_features.click()
 
-            more_features = driver.find_element_by_class_name('amenities__list')
-            features = add_features(more_features.find_elements_by_tag_name('li'), features)   
-        except Exception as e:
-            print(e)
+                more_features = driver.find_element_by_class_name('amenities__list')
+                features = add_features(more_features.find_elements_by_tag_name('li'), features)   
+            except Exception as e:
+                print(e)
 
-        aluguel = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
-        condominio = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]')
-        iptu = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]')
-        fotos = add_value('//*[@id="js-site-main"]/div[1]/div[2]/span')
-        endereco = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p')
-        description = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p')
-        description_len = 0 if not description else len(description.split(' '))
+            aluguel = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
+            condominio = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]')
+            iptu = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]')
+            fotos = add_value('//*[@id="js-site-main"]/div[1]/div[2]/span')
+            endereco = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p')
+            description = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p')
+            description_len = 0 if not description else len(description.split(' '))
 
-        features.extend([aluguel, condominio, iptu, fotos, endereco, description_len])
+            features.extend([aluguel, condominio, iptu, fotos, endereco, description_len])
 
-        driver.back()
-        count+= 1
+            driver.back()
+            count+= 1
+        else:
+            return ''
+
+pages_to_visit = []
+
+def add_pages_to_visit(pages_to_visit):
+    list_pages = driver.find_element_by_class_name('pagination__wrapper')
+    list_pages = list_pages.find_elements_by_tag_name("li")     
+    last_number_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(len(list_pages) - 1)    
+    last_number_elem = driver.find_element_by_xpath(last_number_elem)
+    last_number = last_number_elem.text
+
+    last_number_elem.click()
+
+    if not pages_to_visit:
+        pages_to_visit.extend(list_pages[1:(int(last_number) + 1)])
+        return True, pages_to_visit
+    elif last_number != pages_to_visit[-1].text:
+        pages_to_visit.extend(list_pages[1:(int(last_number) + 1)])
+        return True, pages_to_visit
     else:
-        list_pages = driver.find_element_by_class_name('pagination__wrapper')
-        next_page = list_pages.find_elements_by_tag_name('li')
+        return False, pages_to_visit
 
-        for page in next_page:
-            next_link = page.get_attribute('href')
-        
-            if next_link not in visited_pages:
-                visited_pages.append(next_link)
-                driver.get(next_link)
+try:
+    getting_page = True
+
+    while getting_page:
+        getting_page, pages_to_visit = add_pages_to_visit(pages_to_visit)
+except Exception as e:
+    print(e)
         
 
 # driver.close()
+# find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[6]')
+# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[6]
+# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[7]
+# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[2]
+
+# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]
+
+# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]
