@@ -1,5 +1,6 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+
 import time 
 
 driver = webdriver.Chrome('/home/alvaro/Downloads/chromedriver')
@@ -23,9 +24,9 @@ def apply_search_filters(driver):
         if i not in [3, 7, 10]:
             list_pages[i].click()
             time.sleep(3)
-            driver.execute_script("window.scrollTo(0, {})".format(str(60 + (i*10)))) # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            driver.execute_script("window.scrollTo(0, {})".format(str(60 + (i*10))))
 
-apply_search_filters(driver)
+# apply_search_filters(driver)
 
 # elem = driver.find_element_by_xpath('//*[@id="filter-location-search-input"]')
 # elem.send_keys("Piracicaba - SP")
@@ -53,7 +54,7 @@ def add_value(xpath):
     except:
         return ''
 
-def house_scraping(driver):
+def house_scraping(driver, page_number=2):
     count = 1
     visited_pages = []
 
@@ -62,7 +63,6 @@ def house_scraping(driver):
 
         if house_link:
             driver.get(house_link)
-            time.sleep(3)
 
             features = []
 
@@ -91,8 +91,28 @@ def house_scraping(driver):
             driver.back()
             count+= 1
         else:
-            return ''
+            elem = driver.find_element_by_css_selector('#js-site-main > div.results__container > div.results__content > section > div.results-main__panel.js-list > div.js-results-pagination > div > ul > li:nth-child(2)')
+            actions = ActionChains(driver)
+            actions.move_to_element(elem).perform()
 
+            try:
+                list_pages = driver.find_element_by_class_name('pagination__wrapper')
+                list_pages = list_pages.find_elements_by_tag_name("li")  
+   
+                page_number = 2 if page_number + 1 == 9 else page_number + 1
+
+                last_number_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(page_number)    
+                last_number_elem = driver.find_element_by_xpath(last_number_elem)
+
+                last_number_elem.click()
+                time.sleep(2) 
+
+                house_scraping(driver, page_number)
+            except Exception as e:
+                print(e)
+                return ''
+
+house_scraping(driver)
 pages_to_visit = []
 
 def add_pages_to_visit(pages_to_visit):
