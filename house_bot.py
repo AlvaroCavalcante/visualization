@@ -48,15 +48,18 @@ def add_value(xpath):
     except:
         return ''
 
-def house_scraping(driver, page_number=2):
+def house_scraping(driver, data, page_number=2):
     count = 1
-    visited_pages = []
 
     while True:
         house_link = get_house_link(count)
 
         if house_link:
+            if house_link in data['url']:
+                continue
+
             driver.get(house_link)
+            data['url'].append(house_link)
 
             features = []
 
@@ -72,16 +75,14 @@ def house_scraping(driver, page_number=2):
             except Exception as e:
                 print(e)
 
-            aluguel = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
-            condominio = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]')
-            iptu = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]')
-            fotos = add_value('//*[@id="js-site-main"]/div[1]/div[2]/span')
-            endereco = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p')
-            description = add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p')
-            description_len = 0 if not description else len(description.split(' '))
-
-            features.extend([aluguel, condominio, iptu, fotos, endereco, description_len])
-
+            data['aluguel'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3'))
+            data['condominio'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]'))
+            data['iptu'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]'))
+            data['fotos'].append(add_value('//*[@id="js-site-main"]/div[1]/div[2]/span'))
+            data['endereco'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p'))
+            data['description'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p'))
+            data['description_len'].append(0 if not data['description'][-1] else len(data['description'][-1].split(' ')))
+            data['features'].append(features)
             driver.back()
             count+= 1
         else:
@@ -95,15 +96,27 @@ def house_scraping(driver, page_number=2):
    
                 page_number = 2 if page_number + 1 == 9 else page_number + 1
 
-                last_number_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(page_number)    
-                last_number_elem = driver.find_element_by_xpath(last_number_elem)
+                next_page_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(page_number)    
+                next_page_elem = driver.find_element_by_xpath(next_page_elem)
 
-                last_number_elem.click()
+                next_page_elem.click()
                 time.sleep(2) 
 
-                house_scraping(driver, page_number)
+                house_scraping(driver, data, page_number)
             except Exception as e:
                 print(e)
                 return ''
 
-house_scraping(driver)
+data = {
+    'aluguel': [],
+    'condominio': [],
+    'iptu': [],
+    'fotos': [],
+    'endereco': [],
+    'description': [],
+    'description_len': [],
+    'features': [],
+    'url': []
+}
+
+house_scraping(driver, data)
