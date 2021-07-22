@@ -1,12 +1,39 @@
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
-
+import os
+import pandas as pd
 import time 
 
-driver = webdriver.Chrome('/home/alvaro/Downloads/chromedriver')
+driver = webdriver.Chrome('/home/alvaro/Documentos/chromedriver')
 
 state = 'sp'
 city = 'piracicaba'
+
+if 'house_data.csv' in os.listdir('data'):
+    house_df = pd.read_csv('data/house_data.csv')
+    data = {
+        'aluguel': list(house_df['aluguel'].values),
+        'condominio': list(house_df['condominio'].values),
+        'iptu': list(house_df['iptu'].values),
+        'fotos': list(house_df['fotos'].values),
+        'endereco': list(house_df['endereco'].values),
+        'description': list(house_df['description'].values),
+        'description_len': list(house_df['description_len'].values),
+        'features': list(house_df['features'].values),
+        'url': list(house_df['url'].values)
+    }
+else:
+    data = {
+        'aluguel': [],
+        'condominio': [],
+        'iptu': [],
+        'fotos': [],
+        'endereco': [],
+        'description': [],
+        'description_len': [],
+        'features': [],
+        'url': []
+    }
 
 navigate_url = "https://www.vivareal.com.br/aluguel/{}/{}".format(state, city)
 driver.get(navigate_url)
@@ -26,7 +53,7 @@ def apply_search_filters(driver):
             time.sleep(3)
             driver.execute_script("window.scrollTo(0, {})".format(str(60 + (i*10))))
 
-# apply_search_filters(driver)
+apply_search_filters(driver)
 
 def get_house_link(count):
     try:
@@ -50,50 +77,49 @@ def add_value(xpath):
 
 def house_scraping(driver, data, page_number=2):
     count = 1
+    try:
+        while True:
+            house_link = get_house_link(count)
 
-    while True:
-        house_link = get_house_link(count)
+            if house_link:
+                if house_link in data['url']:
+                    count += 1
+                    continue
 
-        if house_link:
-            if house_link in data['url']:
-                continue
+                driver.get(house_link)
+                features = []
 
-            driver.get(house_link)
-            data['url'].append(house_link)
+                list_features = driver.find_element_by_class_name('features')    
+                features = add_features(list_features.find_elements_by_tag_name("li"), features)
 
-            features = []
+                try:
+                    button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
+                    button_features.click()
 
-            list_features = driver.find_element_by_class_name('features')    
-            features = add_features(list_features.find_elements_by_tag_name("li"), features)
+                    more_features = driver.find_element_by_class_name('amenities__list')
+                    features = add_features(more_features.find_elements_by_tag_name('li'), features)   
+                except Exception as e:
+                    print(e)
 
-            try:
-                button_features = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/div[3]/button')
-                button_features.click()
+                data['url'].append(house_link)
+                data['aluguel'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3'))
+                data['condominio'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]'))
+                data['iptu'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]'))
+                data['fotos'].append(add_value('//*[@id="js-site-main"]/div[1]/div[2]/span'))
+                data['endereco'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p'))
+                data['description'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p'))
+                data['description_len'].append(0 if not data['description'][-1] else len(data['description'][-1].split(' ')))
+                data['features'].append(features)
+                driver.back()
+                count+= 1
+            else:
+                elem = driver.find_element_by_css_selector('#js-site-main > div.results__container > div.results__content > section > div.results-main__panel.js-list > div.js-results-pagination > div > ul > li:nth-child(2)')
+                actions = ActionChains(driver)
+                actions.move_to_element(elem).perform()
 
-                more_features = driver.find_element_by_class_name('amenities__list')
-                features = add_features(more_features.find_elements_by_tag_name('li'), features)   
-            except Exception as e:
-                print(e)
-
-            data['aluguel'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3'))
-            data['condominio'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]'))
-            data['iptu'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]'))
-            data['fotos'].append(add_value('//*[@id="js-site-main"]/div[1]/div[2]/span'))
-            data['endereco'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p'))
-            data['description'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p'))
-            data['description_len'].append(0 if not data['description'][-1] else len(data['description'][-1].split(' ')))
-            data['features'].append(features)
-            driver.back()
-            count+= 1
-        else:
-            elem = driver.find_element_by_css_selector('#js-site-main > div.results__container > div.results__content > section > div.results-main__panel.js-list > div.js-results-pagination > div > ul > li:nth-child(2)')
-            actions = ActionChains(driver)
-            actions.move_to_element(elem).perform()
-
-            try:
                 list_pages = driver.find_element_by_class_name('pagination__wrapper')
                 list_pages = list_pages.find_elements_by_tag_name("li")  
-   
+
                 page_number = 2 if page_number + 1 == 9 else page_number + 1
 
                 next_page_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(page_number)    
@@ -103,20 +129,9 @@ def house_scraping(driver, data, page_number=2):
                 time.sleep(2) 
 
                 house_scraping(driver, data, page_number)
-            except Exception as e:
-                print(e)
-                return ''
-
-data = {
-    'aluguel': [],
-    'condominio': [],
-    'iptu': [],
-    'fotos': [],
-    'endereco': [],
-    'description': [],
-    'description_len': [],
-    'features': [],
-    'url': []
-}
+    except Exception as e:
+        print(e)
+        house_df = pd.DataFrame(data)
+        house_df.to_csv('data/house_data.csv', index=False)
 
 house_scraping(driver, data)
