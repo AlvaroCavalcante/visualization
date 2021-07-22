@@ -3,13 +3,35 @@ from selenium.webdriver.common.keys import Keys
 import time 
 
 driver = webdriver.Chrome('/home/alvaro/Downloads/chromedriver')
-driver.get("https://www.vivareal.com.br/aluguel/")
+
+state = 'sp'
+city = 'piracicaba'
+
+navigate_url = "https://www.vivareal.com.br/aluguel/{}/{}".format(state, city)
+driver.get(navigate_url)
 time.sleep(2)
-elem = driver.find_element_by_xpath('//*[@id="filter-location-search-input"]')
-elem.send_keys("Rio Claro - SP")
-time.sleep(3)
-elem.send_keys(Keys.ENTER)
-time.sleep(2)
+
+def apply_search_filters(driver):
+    driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/nav/div/div/form/fieldset[1]/div[3]/div/div/label').click()
+
+    list_pages = driver.find_element_by_class_name('select-multiple__list')
+    list_pages = list_pages.find_elements_by_tag_name("li") 
+
+    for i in range(len(list_pages)):
+        list_pages = driver.find_element_by_class_name('select-multiple__list')
+        list_pages = list_pages.find_elements_by_tag_name("li") 
+        if i not in [3, 7, 10]:
+            list_pages[i].click()
+            time.sleep(3)
+            driver.execute_script("window.scrollTo(0, {})".format(str(60 + (i*10)))) # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+apply_search_filters(driver)
+
+# elem = driver.find_element_by_xpath('//*[@id="filter-location-search-input"]')
+# elem.send_keys("Piracicaba - SP")
+# time.sleep(3)
+# elem.send_keys(Keys.ENTER)
+# time.sleep(2)
 
 def get_house_link(count):
     try:
