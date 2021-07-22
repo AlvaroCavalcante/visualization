@@ -28,12 +28,6 @@ def apply_search_filters(driver):
 
 # apply_search_filters(driver)
 
-# elem = driver.find_element_by_xpath('//*[@id="filter-location-search-input"]')
-# elem.send_keys("Piracicaba - SP")
-# time.sleep(3)
-# elem.send_keys(Keys.ENTER)
-# time.sleep(2)
-
 def get_house_link(count):
     try:
         house_link = driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[1]/div[{}]'.format(count))
@@ -113,41 +107,3 @@ def house_scraping(driver, page_number=2):
                 return ''
 
 house_scraping(driver)
-pages_to_visit = []
-
-def add_pages_to_visit(pages_to_visit):
-    list_pages = driver.find_element_by_class_name('pagination__wrapper')
-    list_pages = list_pages.find_elements_by_tag_name("li")     
-    last_number_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(len(list_pages) - 1)    
-    last_number_elem = driver.find_element_by_xpath(last_number_elem)
-    last_number = last_number_elem.text
-
-    last_number_elem.click()
-
-    if not pages_to_visit:
-        pages_to_visit.extend(list_pages[1:(int(last_number) + 1)])
-        return True, pages_to_visit
-    elif last_number != pages_to_visit[-1].text:
-        pages_to_visit.extend(list_pages[1:(int(last_number) + 1)])
-        return True, pages_to_visit
-    else:
-        return False, pages_to_visit
-
-try:
-    getting_page = True
-
-    while getting_page:
-        getting_page, pages_to_visit = add_pages_to_visit(pages_to_visit)
-except Exception as e:
-    print(e)
-        
-
-# driver.close()
-# find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[6]')
-# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[6]
-# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[7]
-# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[2]
-
-# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]
-
-# //*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]
