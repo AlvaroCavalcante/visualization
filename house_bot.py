@@ -102,10 +102,15 @@ def house_scraping(driver, data, page_number=2):
                     print(e)
 
                 data['url'].append(house_link)
-                data['aluguel'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3'))
+
+                rent_value = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[1]/h3')
+                if 'mês' not in rent_value.split('/'):
+                    rent_value = add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/div/h3')
+
+                data['aluguel'].append(rent_value)               
                 data['condominio'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[1]/span[2]'))
                 data['iptu'].append(add_value('//*[@id="js-site-main"]/div[2]/div[2]/div[1]/div/div[2]/ul/li[3]/span[2]'))
-                data['fotos'].append(add_value('//*[@id="js-site-main"]/div[1]/div[2]/span'))
+                data['fotos'].append(add_value('//*[@id="js-site-main"]/div[1]/div[2]/button/span'))
                 data['endereco'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[1]/section/div/div/p'))
                 data['description'].append(add_value('//*[@id="js-site-main"]/div[2]/div[1]/div[4]/div[1]/div/div/p'))
                 data['description_len'].append(0 if not data['description'][-1] else len(data['description'][-1].split(' ')))
@@ -149,3 +154,4 @@ while True:
     apply_search_filters(driver)
 
     house_scraping(driver, data)
+    driver.close()
