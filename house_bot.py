@@ -1,43 +1,44 @@
+import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 import os
 import pandas as pd
 import time 
 
-driver = webdriver.Chrome('/home/alvaro/Documentos/chromedriver')
+def get_driver():
+    # driver = webdriver.Chrome('/home/alvaro/Documentos/chromedriver')
+    options = webdriver.ChromeOptions() 
+    options.add_argument("start-maximized")
+    driver = uc.Chrome(options=options)
+    return driver
 
-state = 'sp'
-city = 'piracicaba'
-
-if 'house_data.csv' in os.listdir('data'):
-    house_df = pd.read_csv('data/house_data.csv')
-    data = {
-        'aluguel': list(house_df['aluguel'].values),
-        'condominio': list(house_df['condominio'].values),
-        'iptu': list(house_df['iptu'].values),
-        'fotos': list(house_df['fotos'].values),
-        'endereco': list(house_df['endereco'].values),
-        'description': list(house_df['description'].values),
-        'description_len': list(house_df['description_len'].values),
-        'features': list(house_df['features'].values),
-        'url': list(house_df['url'].values)
-    }
-else:
-    data = {
-        'aluguel': [],
-        'condominio': [],
-        'iptu': [],
-        'fotos': [],
-        'endereco': [],
-        'description': [],
-        'description_len': [],
-        'features': [],
-        'url': []
-    }
-
-navigate_url = "https://www.vivareal.com.br/aluguel/{}/{}".format(state, city)
-driver.get(navigate_url)
-time.sleep(2)
+def get_data():
+    if 'house_data.csv' in os.listdir('data'):
+        house_df = pd.read_csv('data/house_data.csv')
+        data = {
+            'aluguel': list(house_df['aluguel'].values),
+            'condominio': list(house_df['condominio'].values),
+            'iptu': list(house_df['iptu'].values),
+            'fotos': list(house_df['fotos'].values),
+            'endereco': list(house_df['endereco'].values),
+            'description': list(house_df['description'].values),
+            'description_len': list(house_df['description_len'].values),
+            'features': list(house_df['features'].values),
+            'url': list(house_df['url'].values)
+        }
+    else:
+        data = {
+            'aluguel': [],
+            'condominio': [],
+            'iptu': [],
+            'fotos': [],
+            'endereco': [],
+            'description': [],
+            'description_len': [],
+            'features': [],
+            'url': []
+        }
+    return data
 
 def apply_search_filters(driver):
     driver.find_element_by_xpath('//*[@id="js-site-main"]/div[2]/div[1]/nav/div/div/form/fieldset[1]/div[3]/div/div/label').click()
@@ -52,8 +53,6 @@ def apply_search_filters(driver):
             list_pages[i].click()
             time.sleep(3)
             driver.execute_script("window.scrollTo(0, {})".format(str(60 + (i*10))))
-
-apply_search_filters(driver)
 
 def get_house_link(count):
     try:
@@ -87,6 +86,7 @@ def house_scraping(driver, data, page_number=2):
                     continue
 
                 driver.get(house_link)
+                time.sleep(1.5)
                 features = []
 
                 list_features = driver.find_element_by_class_name('features')    
@@ -111,6 +111,7 @@ def house_scraping(driver, data, page_number=2):
                 data['description_len'].append(0 if not data['description'][-1] else len(data['description'][-1].split(' ')))
                 data['features'].append(features)
                 driver.back()
+                time.sleep(2)
                 count+= 1
             else:
                 elem = driver.find_element_by_css_selector('#js-site-main > div.results__container > div.results__content > section > div.results-main__panel.js-list > div.js-results-pagination > div > ul > li:nth-child(2)')
@@ -128,10 +129,23 @@ def house_scraping(driver, data, page_number=2):
                 next_page_elem.click()
                 time.sleep(2) 
 
-                house_scraping(driver, data, page_number)
+                return house_scraping(driver, data, page_number)
     except Exception as e:
         print(e)
         house_df = pd.DataFrame(data)
         house_df.to_csv('data/house_data.csv', index=False)
+        return ''
 
-house_scraping(driver, data)
+state = 'sp'
+city = 'bauru'
+
+while True:
+    navigate_url = "https://www.vivareal.com.br/aluguel/{}/{}".format(state, city)
+    driver = get_driver()
+    driver.get(navigate_url)
+    time.sleep(2)
+    data = get_data()
+    driver.find_element_by_xpath('//*[@id="cookie-notifier-cta"]').click()
+    apply_search_filters(driver)
+
+    house_scraping(driver, data)
