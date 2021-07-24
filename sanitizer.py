@@ -1,8 +1,25 @@
 import pandas as pd
 import ast
 from unidecode import unidecode
+import re
+from nltk.metrics.distance  import edit_distance
 
 df = pd.read_csv('./data/house_data.csv')
+
+def get_similar_address():
+    similar = []
+    count = 0
+
+    for add in df['endereco'].unique():
+        count +=1
+        print(count)
+        for add2 in df['endereco'].unique():
+            if add != add2:
+                dist = edit_distance(add, add2)
+                if dist <= 2:
+                    similar.append((add, add2))
+
+    return similar
 
 df['iptu'] = df['iptu'].fillna('')
 df['iptu'] = df['iptu'].map(lambda x: x.lstrip('R$'))
@@ -15,10 +32,8 @@ df['iptu'] = df['iptu'].replace('', 0).astype(float)
 df['condominio'] = df['condominio'].replace('Não informado', -1)
 df['condominio'] = df['condominio'].replace('', 0).astype(float)
 
-
 df['aluguel'] = df['aluguel'].fillna('-1')
 df['aluguel'] = df['aluguel'].map(lambda x: x.lstrip(' R$').rstrip('/mês').replace('.', '')).astype(float)
-
 
 df['endereco'] = df['endereco'].str.upper()
 df['endereco'] = df['endereco'].map(lambda x: x.replace('SP', '').replace('BAURU', ''))
@@ -31,7 +46,6 @@ for add in df['endereco']:
         add = add[divide_ind+1:]
 
     new_add.append(add.replace(',', '').replace('-', '').lstrip(' ').rstrip(' '))
-    
 
 len_features = []
 m_squared = []
@@ -63,9 +77,6 @@ for f in df['features']:
     else:
         car_space.append(-1)
         
-    print(f[0:4])
-
-
 data = {
         'n_caracteristicas': len_features,
         'metros': m_squared,
@@ -78,5 +89,10 @@ data = {
         }
 
 feature_frame = pd.DataFrame(data)
+
+feature_frame['endereco'] = feature_frame['endereco'].fillna('')
+feature_frame['endereco'] = feature_frame['endereco'].map(lambda x: re.sub("[0-9]+", "", x).lstrip(' '))
+
+feature_frame['endereco'] = feature_frame['endereco'].replace('VILA CORALINA', 'VILA CAROLINA')
 
 feature_frame.to_csv('data/feature_frame.csv', index=False)
