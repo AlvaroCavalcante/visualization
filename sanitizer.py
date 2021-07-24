@@ -2,7 +2,7 @@ import pandas as pd
 import ast
 from unidecode import unidecode
 
-df = pd.read_csv('/home/alvaro/Área de Trabalho/data visualization/data/house_data_pira.csv')
+df = pd.read_csv('./data/house_data.csv')
 
 df['iptu'] = df['iptu'].fillna('')
 df['iptu'] = df['iptu'].map(lambda x: x.lstrip('R$'))
@@ -15,10 +15,23 @@ df['iptu'] = df['iptu'].replace('', 0).astype(float)
 df['condominio'] = df['condominio'].replace('Não informado', -1)
 df['condominio'] = df['condominio'].replace('', 0).astype(float)
 
+
+df['aluguel'] = df['aluguel'].fillna('-1')
 df['aluguel'] = df['aluguel'].map(lambda x: x.lstrip(' R$').rstrip('/mês').replace('.', '')).astype(float)
 
+
 df['endereco'] = df['endereco'].str.upper()
-df['endereco'] = df['endereco'].map(lambda x: x.replace('SP', '').replace('PIRACICABA', ''))
+df['endereco'] = df['endereco'].map(lambda x: x.replace('SP', '').replace('BAURU', ''))
+df['endereco'] = df['endereco'].map(lambda x: unidecode(x))
+
+new_add = []
+for add in df['endereco']:
+    if 'RUA' in add.split(' ') or 'AVENIDA' in add.split(' '):
+        divide_ind = add.index('-')
+        add = add[divide_ind+1:]
+
+    new_add.append(add.replace(',', '').replace('-', '').lstrip(' ').rstrip(' '))
+    
 
 len_features = []
 m_squared = []
@@ -50,17 +63,8 @@ for f in df['features']:
     else:
         car_space.append(-1)
         
-    print(f[4:])
+    print(f[0:4])
 
-df['endereco'] = df['endereco'].map(lambda x: unidecode(x))
-
-new_add = []
-for add in df['endereco']:
-    if 'RUA' in add.split(' ') or 'AVENIDA' in add.split(' '):
-        divide_ind = add.index('-')
-        add = add[divide_ind+1:]
-
-    new_add.append(add.replace(',', '').replace('-', '').lstrip(' ').rstrip(' '))
 
 data = {
         'n_caracteristicas': len_features,
@@ -75,4 +79,4 @@ data = {
 
 feature_frame = pd.DataFrame(data)
 
-
+feature_frame.to_csv('data/feature_frame.csv', index=False)
