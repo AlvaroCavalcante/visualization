@@ -126,9 +126,7 @@ def house_scraping(driver, data, page_number=2):
                 list_pages = driver.find_element_by_class_name('pagination__wrapper')
                 list_pages = list_pages.find_elements_by_tag_name("li")  
 
-                page_number = 2 if page_number + 1 == 9 else page_number + 1
-
-                next_page_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(page_number)    
+                next_page_elem = '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[{}]'.format(9)    
                 next_page_elem = driver.find_element_by_xpath(next_page_elem)
 
                 next_page_elem.click()
