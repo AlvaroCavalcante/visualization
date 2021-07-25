@@ -26,16 +26,38 @@ pred_reg = reg.predict(X)
 
 coef = reg.coef_
 
-error = mean_squared_error(reg.predict(X), y)
+error = mean_squared_error(reg.predict(X), y, squared=False)
 
 clf = RandomForestClassifier(max_depth=400, random_state=0)
 clf.fit(X, y)
 
 predictions = clf.predict(X)
-error2 = mean_squared_error(clf.predict(X), y)
+error2 = mean_squared_error(clf.predict(X), y, squared=False)
 clf.score(X, y)
 
-plt.barh(X.columns, clf.feature_importances_)
+
+def plot_cost_by_district():
+    top_district = list(df['endereco'].value_counts()[0:10].index)  
+    mean_cost = []
+    
+    for add in top_district:
+        y_values = df[df['endereco'] == add]['y']
+        mean_cost.append(sum(y_values) / len(y_values))
+        
+    plt.bar(top_district, mean_cost)
+            
+plot_cost_by_district()
+      
+def plot_feature_imp():
+    result_dict = {}    
+    
+    for i, col in enumerate(X.columns):
+        result_dict[col] = clf.feature_importances_[i]
+    
+    order_dict = {k: v for k, v in sorted(result_dict.items(), key=lambda item: item[1], reverse=False)}
+    
+    plt.barh(list(order_dict.keys()), order_dict.values())
+
 
 def get_reg_plot(predictions, y):
     plt.figure(figsize=(10,10))
