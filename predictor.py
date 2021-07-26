@@ -52,7 +52,11 @@ def plot_cost_by_district():
     
     return html
 
-                 
+
+def plot_house_pricing():
+    fig = px.scatter(df, x="metros", y="y", log_x=True, log_y=True)
+    return fig.to_html()
+
 def plot_feature_imp():
     result_dict = {}    
     
@@ -65,12 +69,16 @@ def plot_feature_imp():
     html = fig.to_html('test.html')
     return html
     
+df = df.drop([df.index[324] , df.index[1095], df.index[1481]])
+
 html_fig1 = plot_feature_imp()
 html_fig2 = plot_cost_by_district()
+html_fig3 = plot_house_pricing()
 
 f = open('report.html','w')
 f.write(html_fig1)
 f.write(html_fig2)
+f.write(html_fig3)
 f.close()
 
 
