@@ -5,6 +5,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
+
 
 df = pd.read_csv('/home/alvaro/Área de Trabalho/data visualization/data/feature_frame.csv')
 
@@ -43,20 +46,32 @@ def plot_cost_by_district():
     for add in top_district:
         y_values = df[df['endereco'] == add]['y']
         mean_cost.append(sum(y_values) / len(y_values))
-        
-    plt.bar(top_district, mean_cost)
-            
-plot_cost_by_district()
-      
+    
+    fig = px.bar(x=mean_cost, y=top_district, orientation='h', labels=dict(x="Valor médio do aluguel", y="Bairro"))
+    html = fig.to_html('test.html')
+    
+    return html
+
+                 
 def plot_feature_imp():
     result_dict = {}    
     
     for i, col in enumerate(X.columns):
         result_dict[col] = clf.feature_importances_[i]
     
-    order_dict = {k: v for k, v in sorted(result_dict.items(), key=lambda item: item[1], reverse=False)}
+    order_dict = {k: v for k, v in sorted(result_dict.items(), key=lambda item: item[1], reverse=True)}
     
-    plt.barh(list(order_dict.keys()), order_dict.values())
+    fig = px.bar(x=list(order_dict.keys()), y=order_dict.values(), labels=dict(x="Característica", y="Importância"))
+    html = fig.to_html('test.html')
+    return html
+    
+html_fig1 = plot_feature_imp()
+html_fig2 = plot_cost_by_district()
+
+f = open('report.html','w')
+f.write(html_fig1)
+f.write(html_fig2)
+f.close()
 
 
 def get_reg_plot(predictions, y):
