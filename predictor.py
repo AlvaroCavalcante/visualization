@@ -37,13 +37,14 @@ clf.score(X, y)
 
 def plot_cost_by_district():
     top_district = list(df['endereco'].value_counts()[0:10].index)  
-    mean_cost = []
+    result = {}
     
     for add in top_district:
         y_values = df[df['endereco'] == add]['y']
-        mean_cost.append(sum(y_values) / len(y_values))
+        result[add] = sum(y_values) / len(y_values)
     
-    fig = px.bar(x=mean_cost, y=top_district, orientation='h', labels=dict(x="Valor médio do aluguel", y="Bairro"))
+    order_dict = {k: v for k, v in sorted(result.items(), key=lambda item: item[1], reverse=True)}
+    fig = px.bar(x=order_dict.values(), y=list(order_dict.keys()), orientation='h', labels=dict(x="Valor médio do aluguel", y="Bairro"))
     html = fig.to_html('test.html')
     
     return html
