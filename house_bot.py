@@ -6,7 +6,6 @@ import pandas as pd
 import time 
 
 def get_driver():
-    # driver = webdriver.Chrome('/home/alvaro/Documentos/chromedriver')
     options = webdriver.ChromeOptions() 
     options.add_argument("start-maximized")
     driver = uc.Chrome(options=options)
@@ -74,7 +73,7 @@ def add_value(xpath):
     except:
         return ''
 
-def house_scraping(driver, data, page_number=2):
+def house_scraping(driver, data):
     count = 1
     try:
         while True:
@@ -132,7 +131,7 @@ def house_scraping(driver, data, page_number=2):
                 next_page_elem.click()
                 time.sleep(2) 
 
-                return house_scraping(driver, data, page_number)
+                return house_scraping(driver, data)
     except Exception as e:
         print(e)
         house_df = pd.DataFrame(data)
