@@ -8,12 +8,10 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
 
-
 df = pd.read_csv('/home/alvaro/Área de Trabalho/data visualization/data/feature_frame.csv')
 
 y = df['y']
-df.drop(columns=['y'], inplace=True)
-X = df.copy()
+X = df.iloc[:, 0:7]
 
 scaler = StandardScaler()
 
@@ -27,9 +25,7 @@ reg = LinearRegression().fit(X, y)
 reg.score(X, y)
 pred_reg = reg.predict(X)
 
-coef = reg.coef_
-
-error = mean_squared_error(reg.predict(X), y, squared=False)
+error = mean_squared_error(pred_reg, y, squared=False)
 
 clf = RandomForestClassifier(max_depth=400, random_state=0)
 clf.fit(X, y)
@@ -52,7 +48,6 @@ def plot_cost_by_district():
     
     return html
 
-
 def plot_house_pricing():
     fig = px.scatter(df, x="metros", y="y", log_x=True, log_y=True)
     return fig.to_html()
@@ -69,7 +64,7 @@ def plot_feature_imp():
     html = fig.to_html('test.html')
     return html
     
-df = df.drop([df.index[324] , df.index[1095], df.index[1481]])
+# df = df.drop([df.index[324] , df.index[1095], df.index[1481]])
 
 html_fig1 = plot_feature_imp()
 html_fig2 = plot_cost_by_district()
