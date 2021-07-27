@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import statistics
+
 
 df = pd.read_csv('/home/alvaro/Área de Trabalho/data visualization/data/feature_frame.csv')
 
@@ -71,7 +73,42 @@ def plot_feature_imp():
     fig = px.bar(x=list(order_dict.keys()), y=order_dict.values(), labels=dict(x="Característica", y="Importância"))
     html = fig.to_html('test.html')
     return html
+   
+def get_numerical_values():
+    fig = make_subplots(
+    rows=2, cols=2,
+    specs=[[{"type": "domain"}, {"type": "domain"}],
+           [{"type": "domain"}, {"type": "domain"}]])
+
+    fig.add_trace(go.Indicator(
+        mode = "number",
+        value = min(df['y']),
+        title = {"text": "Valor mínimo de aluguel<br>"},
+        number = {'prefix': "R$ "}), row=1, col=1)
     
+    fig.add_trace(go.Indicator(
+        mode = "number",
+        value = max(df['y']),
+        title = {"text": "Valor máximo de aluguel<br>"},
+        number = {'prefix': "R$ "}), row=1, col=2)
+    
+    fig.add_trace(go.Indicator(
+        mode = "number",
+        value = len(df),
+        title = {"text": "Casas encontradas<br><span style='font-size:0.8em;color:gray'>Bauru - SP</span><br>"},
+        domain = {'x': [0, 1], 'y': [0, 1]}),
+                     row=2, col=1)
+    
+    fig.add_trace(go.Indicator(
+        mode = "number",
+        value = statistics.median(df['y'].values),
+        title = {"text": "Valor Mediano de aluguel<br>"},
+        number = {'prefix': "R$ "}), row=2, col=2)
+    
+    fig.update_layout(paper_bgcolor = "lightgray", height=500)
+
+    return fig.to_html()
+
 # df = df.drop([df.index[324] , df.index[1095], df.index[1481]])
 
 df['promocao'] = ['Falso'] * len(df)
@@ -98,40 +135,7 @@ for i, value in enumerate(df['y'].values):
 df['status'] = status
 df['predictions'] = predictions
 
-fig2 = go.Figure(go.Indicator(
-    mode = "number",
-    value = len(df),
-    title = {"text": "Casas encontradas<br><span style='font-size:0.8em;color:gray'>Bauru - SP</span><br>"},
-    # number = {'prefix': "CASAS ENCONTRADAS: "},
-    domain = {'x': [0, 1], 'y': [0, 1]}))
-
-
-# fig = go.Figure()
-
-fig = make_subplots(rows=1, cols=2)
-
-fig.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 200,
-    domain = {'x': [0, 0.5], 'y': [0, 0.5]},
-    delta = {'position' : "top"}))
-
-fig.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 350,
-    delta = {},
-    domain = {'x': [0, 0.5], 'y': [0.5, 1]}))
-
-fig.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = len(df),
-    title = {"text": "Casas encontradas<br><span style='font-size:0.8em;color:gray'>Bauru - SP</span><br>"},
-    # number = {'prefix': "CASAS ENCONTRADAS: "},
-    domain = {'x': [0, 1], 'y': [0, 1]}))
-
-fig.update_layout(paper_bgcolor = "lightgray")
-
-html_fig = fig.to_html()
+html_fig = get_numerical_values()
 html_fig1 = plot_feature_imp()
 html_fig2 = plot_cost_by_district()
 html_fig3 = plot_house_pricing()
