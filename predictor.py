@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 
 df = pd.read_csv('/home/alvaro/Área de Trabalho/data visualization/data/feature_frame.csv')
 
@@ -50,7 +51,13 @@ def plot_cost_by_district():
     return html
 
 def plot_house_pricing():
-    fig = px.scatter(df, x="metros", y="y", log_x=True, log_y=True)
+    fig = px.scatter(
+        df, x="metros", y="y", log_x=True, log_y=True, color='promocao', color_discrete_sequence=['#adadad', '#3b6be3'])
+    return fig.to_html()
+
+def plot_house_status():
+    fig = px.scatter(
+        df, x="predictions", y="y", log_x=True, log_y=True, color='status', color_discrete_sequence=['#bcc0cc', '#e32b3e', '#04c943'])
     return fig.to_html()
 
 def plot_feature_imp():
@@ -67,16 +74,76 @@ def plot_feature_imp():
     
 # df = df.drop([df.index[324] , df.index[1095], df.index[1481]])
 
+df['promocao'] = ['Falso'] * len(df)
+
+sum(df['metros']) / len(df['metros'])
+sum(df['y']) / len(df['y'])
+
+best_offer = df[(df['metros'] > (130*110) / 100) & (df['y'] < 2466)]
+
+df.loc[(df['metros'] > (130*110) / 100 ) & (df['y'] < 2466), 'promocao'] = 'Verdadeiro'
+
+status = []
+
+for i, value in enumerate(df['y'].values):
+    inc_value = (value*110) / 100
+    if value == predictions[i]:
+        status.append('Normal')
+    elif inc_value < predictions[i]:
+        status.append('Barato')
+    else:
+        print(value, predictions[i])
+        status.append('Caro')
+        
+df['status'] = status
+df['predictions'] = predictions
+
+fig2 = go.Figure(go.Indicator(
+    mode = "number",
+    value = len(df),
+    title = {"text": "Casas encontradas<br><span style='font-size:0.8em;color:gray'>Bauru - SP</span><br>"},
+    # number = {'prefix': "CASAS ENCONTRADAS: "},
+    domain = {'x': [0, 1], 'y': [0, 1]}))
+
+
+# fig = go.Figure()
+
+fig = make_subplots(rows=1, cols=2)
+
+fig.add_trace(go.Indicator(
+    mode = "number+delta",
+    value = 200,
+    domain = {'x': [0, 0.5], 'y': [0, 0.5]},
+    delta = {'position' : "top"}))
+
+fig.add_trace(go.Indicator(
+    mode = "number+delta",
+    value = 350,
+    delta = {},
+    domain = {'x': [0, 0.5], 'y': [0.5, 1]}))
+
+fig.add_trace(go.Indicator(
+    mode = "number+delta",
+    value = len(df),
+    title = {"text": "Casas encontradas<br><span style='font-size:0.8em;color:gray'>Bauru - SP</span><br>"},
+    # number = {'prefix': "CASAS ENCONTRADAS: "},
+    domain = {'x': [0, 1], 'y': [0, 1]}))
+
+fig.update_layout(paper_bgcolor = "lightgray")
+
+html_fig = fig.to_html()
 html_fig1 = plot_feature_imp()
 html_fig2 = plot_cost_by_district()
 html_fig3 = plot_house_pricing()
+html_fig4 = plot_house_status()
 
 f = open('report.html','w')
+f.write(html_fig)
 f.write(html_fig1)
 f.write(html_fig2)
 f.write(html_fig3)
+f.write(html_fig4)
 f.close()
-
 
 def get_reg_plot(predictions, y):
     plt.figure(figsize=(10,10))
